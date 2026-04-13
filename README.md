@@ -159,7 +159,7 @@ kubernetes-homelab/
 
 ### Control Plane Only
 
-- A free IP range on your LAN **outside** your router's DHCP range (for MetalLB)
+- A free IP range on your LAN **outside** the router's DHCP range (for MetalLB)
 - A Git repository to serve as the GitOps source for Argo CD
 
 ### Longhorn Prerequisite (all nodes — before running `addons.sh`)

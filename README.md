@@ -185,6 +185,8 @@ This script handles: swap disable, kernel modules (`overlay`, `br_netfilter`), s
 
 > **WSL2 note:** The script detects WSL2 automatically and prints the additional manual steps required (port forwarding, static IP, systemd enablement).
 
+> All my nodes are running `Debian 13`. I added the note above since WSL has it own network complexitites.
+
 ---
 
 ### Step 2 — Initialise the Control Plane

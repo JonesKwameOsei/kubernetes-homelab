@@ -43,7 +43,7 @@ A production-grade, bare-metal Kubernetes homelab cluster built on Debian 13. De
 Client (LAN)
     │
     ▼
-MetalLB LoadBalancer IP  ←── single external IP from your LAN pool
+MetalLB LoadBalancer IP  ←── single external IP from the LAN pool
     │
     ▼
 Cilium Gateway (homelab-gateway)

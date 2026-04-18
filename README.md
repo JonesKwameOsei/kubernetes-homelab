@@ -98,7 +98,7 @@ Cilium Gateway (homelab-gateway)
 | Component | Namespace | Purpose |
 |---|---|---|
 | Loki | `monitoring` | Log aggregation in SingleBinary mode (filesystem storage) |
-| Promtail | `monitoring` | Log collector — ships node and pod logs to Loki |
+| Grafana Alloy | `monitoring` | Unified observability agent — collects pod logs and Kubernetes events, ships to Loki (replaces deprecated Promtail) |
 
 ### Security
 
@@ -354,6 +354,35 @@ All services are exposed through the Cilium Gateway. Add the Gateway's external 
 
 ---
 
+### Loki — Log Aggregation
+
+Logs from all pods and Kubernetes events are collected by **Grafana Alloy** and shipped to Loki. Query logs in Grafana via **Explore → Loki datasource**.
+
+**Datasource configuration:**
+- URL: `http://loki.monitoring.svc.cluster.local:3100`
+- HTTP Header: `X-Scope-OrgID: homelab` (required — Loki multi-tenancy is enabled)
+
+**Useful LogQL queries:**
+
+```logql
+# All logs across the cluster
+{job=~".+/.+"}
+
+# Filter by namespace
+{namespace="argocd"}
+
+# Errors only
+{job=~".+/.+"} |= "error"
+
+# Kubernetes cluster events
+{job="integrations/kubernetes/eventhandler"}
+```
+
+![Loki Logs in Grafana](images/lokki.png)
+![Loki Logs in Grafana](images/lokki2.png)
+
+---
+
 ## GitOps with Argo CD
 
 The cluster follows the **App-of-Apps** pattern. Argo CD watches the `apps/` directory of your GitOps repository. Each file in `apps/` is an Argo CD `Application` manifest pointing at a subdirectory of `manifests/`.
@@ -464,3 +493,5 @@ kubectl get secret prometheus-grafana -n monitoring \
 - **Prometheus Adapter replaces `metrics-server`** — bridges Prometheus → Kubernetes Metrics API, enabling HPA on any Prometheus metric.
 - **Loki multi-tenancy is enabled** — all Loki API calls require the `X-Scope-OrgID` header.
 - **Single Gateway for all services** — one MetalLB IP, all traffic routed via HTTPRoutes hanging off `homelab-gateway`.
+- **Grafana Alloy replaces Promtail** — Promtail is deprecated. Alloy is the unified successor, handling pod logs and Kubernetes events in a single agent. Config is written via a values file in `addons.sh` to avoid shell quoting issues with the River-based config syntax.
+- **CoreDNS uses explicit upstream resolvers** — Debian 13's NetworkManager generates a `/etc/resolv.conf` with link-local IPv6 entries that are unreachable from inside containers. CoreDNS is patched post-install to use `192.168.1.1 8.8.8.8 8.8.4.4` directly instead of `forward . /etc/resolv.conf`.

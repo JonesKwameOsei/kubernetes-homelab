@@ -318,41 +318,39 @@ All services are exposed through the Cilium Gateway. Add the Gateway's external 
 
 ### Argo CD
 
-> **Screenshot:** *(place your Argo CD UI screenshot at `docs/images/argocd.png`)*
-
-![Argo CD UI](docs/images/argocd.png)
+![Argo CD UI](images/argocd.png)
 
 ---
 
 ### Grafana
 
-> **Screenshot:** *(place your Grafana dashboard screenshot at `docs/images/grafana.png`)*
-
-![Grafana Dashboard](docs/images/grafana.png)
+![Grafana Dashboard](images/grafana1.png)
+![Grafana Dashboard](images/grafana2.png)
 
 ---
 
 ### Prometheus
 
-> **Screenshot:** *(place your Prometheus UI screenshot at `docs/images/prometheus.png`)*
+![Prometheus UI](images/prometheus.png)
 
-![Prometheus UI](docs/images/prometheus.png)
+---
+
+### Alertmanager
+
+![Alertmanager UI](images/alertmanager.png)
 
 ---
 
 ### Longhorn
 
-> **Screenshot:** *(place your Longhorn UI screenshot at `docs/images/longhorn.png`)*
-
-![Longhorn Storage UI](docs/images/longhorn.png)
+![Longhorn Storage UI](images/longhorn.png)
 
 ---
 
 ### KubeView
 
-> **Screenshot:** *(place your KubeView screenshot at `docs/images/kubeview.png`)*
-
-![KubeView Cluster Map](docs/images/kubeview.png)
+![KubeView Cluster Map](images/kubeview1.png)
+![KubeView Cluster Map](images/kubeview2.png)
 
 ---
 

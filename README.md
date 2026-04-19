@@ -309,12 +309,12 @@ All services are exposed through the Cilium Gateway. Add the Gateway's external 
 
 | Service | Default Hostname | Purpose |
 |---|---|---|
-| Argo CD | `argocd.<YOUR_DOMAIN>` | GitOps UI |
-| Grafana | `grafana.<YOUR_DOMAIN>` | Metrics dashboards |
-| Prometheus | `prometheus.<YOUR_DOMAIN>` | Metrics query UI |
-| Alertmanager | `alertmanager.<YOUR_DOMAIN>` | Alert routing UI |
-| Longhorn | `longhorn.<YOUR_DOMAIN>` | Storage management UI |
-| KubeView | `kubeview.<YOUR_DOMAIN>` | Cluster visualisation |
+| Argo CD | `argocd.<MY_DOMAIN>` | GitOps UI |
+| Grafana | `grafana.<MY_DOMAIN>` | Metrics dashboards |
+| Prometheus | `prometheus.<MY_DOMAIN>` | Metrics query UI |
+| Alertmanager | `alertmanager.<MY_DOMAIN>` | Alert routing UI |
+| Longhorn | `longhorn.<My_DOMAIN>` | Storage management UI |
+| KubeView | `kubeview.<MY_DOMAIN>` | Cluster visualisation |
 
 ### Argo CD
 

@@ -26,16 +26,16 @@ A production-grade, bare-metal Kubernetes homelab cluster built on Debian 13. De
 
 | Role | Hostname | IP | Notes |
 |---|---|---|---|
-| Control Plane | `debian` | `192.168.1.248` | kubeadm init, kubectl, Helm, CoreDNS LAN DNS |
-| Worker Node 1 | `debianos` | `192.168.1.26` | Wired ethernet, static IP |
-| Worker Node 2 | `node2` (ThinkCentre) | `192.168.1.201` | Wired ethernet, static IP |
+| Control Plane | `debian` | `<CONTROL_PLANE_IP>` | kubeadm init, kubectl, Helm, CoreDNS LAN DNS |
+| Worker Node 1 | `debianos` | `<WORKER1_IP>` | Wired ethernet, static IP |
+| Worker Node 2 | `node2` (ThinkCentre) | `<WORKER2_IP>` | Wired ethernet, static IP |
 
 - **OS:** Debian 13 (Trixie) — bare-metal
 - **Kubernetes:** v1.36.0 (node2: v1.36.1)
 - **Container runtime:** containerd.io (Docker repo, systemd cgroup driver)
 - **CNI:** Cilium v1.19.3 in kube-proxy replacement mode (eBPF datapath)
 - **Ingress:** Cilium Gateway API — HTTP + HTTPS (TLS terminated at Gateway)
-- **Load balancer:** MetalLB (L2 mode, LAN IP pool `192.168.1.220–192.168.1.240`)
+- **Load balancer:** MetalLB (L2 mode, LAN IP pool `<METALLB_POOL_START>–<METALLB_POOL_END>`)
 - **Storage:** Longhorn v1.11.1 (distributed block storage, 2 replicas per volume)
 - **Pod CIDR:** `10.244.0.0/16`
 - **All nodes:** wired ethernet only (WiFi disabled — causes firmware crashes on Intel cards)
@@ -45,11 +45,11 @@ A production-grade, bare-metal Kubernetes homelab cluster built on Debian 13. De
 ```
 Client (LAN)
     │
-    ▼ DNS: *.homelab.local → 192.168.1.221
-CoreDNS LAN Pod (192.168.1.248:53)
+    ▼ DNS: *.homelab.local → <GATEWAY_IP>
+CoreDNS LAN Pod (<CONTROL_PLANE_IP>:53)
     │
     ▼
-MetalLB LoadBalancer IP (192.168.1.221)
+MetalLB LoadBalancer IP (<GATEWAY_IP>)
     │
     ▼
 Cilium Gateway (homelab-gateway) — TLS terminated here
@@ -65,7 +65,7 @@ Cilium Gateway (homelab-gateway) — TLS terminated here
     └── HTTPRoute → Hubble UI      (https://hubble.homelab.local)
 
 Argo CD CLI (gRPC):
-    192.168.1.222 (direct LoadBalancer) → argocd-grpc.homelab.local
+    <ARGOCD_LB_IP> (direct LoadBalancer) → argocd-grpc.homelab.local
 ```
 
 ---
@@ -275,14 +275,14 @@ sudo ls -lh /var/backups/etcd/
 The cluster runs a **CoreDNS pod** (`lan-dns` namespace) as the LAN DNS resolver, eliminating all `/etc/hosts` maintenance:
 
 ```
-All nodes (/etc/resolv.conf → nameserver 192.168.1.248)
+All nodes (/etc/resolv.conf → nameserver <CONTROL_PLANE_IP>)
       │
       ▼
 CoreDNS LAN pod (hostNetwork, port 53, on control plane)
       │
-      ├── *.homelab.local → 192.168.1.221 (wildcard template)
-      ├── argocd-grpc.homelab.local → 192.168.1.222 (hosts plugin)
-      └── everything else → forward to 192.168.1.1 + 8.8.8.8
+      ├── *.homelab.local → <GATEWAY_IP> (wildcard template)
+      ├── argocd-grpc.homelab.local → <ARGOCD_LB_IP> (hosts plugin)
+      └── everything else → forward to <ROUTER_IP> + 8.8.8.8
 ```
 
 **Key implementation details:**
@@ -299,7 +299,7 @@ CoreDNS LAN pod (hostNetwork, port 53, on control plane)
 ```bash
 kubectl edit configmap coredns-lan -n lan-dns
 # Add to the hosts block:
-# 192.168.1.XXX my-special-service.homelab.local
+# <NEW_SERVICE_IP> my-special-service.homelab.local
 kubectl rollout restart deployment coredns-lan -n lan-dns
 ```
 
@@ -469,7 +469,7 @@ kubectl apply -f control-plane/kyverno-additional-policies.yaml
 kubectl apply -f control-plane/lan-dns.yaml
 
 # Configure all nodes to use the DNS pod
-sudo bash -c 'echo "nameserver 192.168.1.248" > /etc/resolv.conf'
+sudo bash -c 'echo "nameserver <CONTROL_PLANE_IP>" > /etc/resolv.conf'
 sudo chattr +i /etc/resolv.conf
 ```
 

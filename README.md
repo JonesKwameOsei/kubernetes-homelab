@@ -45,7 +45,7 @@ A production-grade, bare-metal Kubernetes homelab cluster built on Debian 13. De
 ```
 Client (LAN)
     │
-    ▼ DNS: *.homelab.local → <GATEWAY_IP>
+    ▼ DNS: *.<YOUR_DOMAIN> → <GATEWAY_IP>
 CoreDNS LAN Pod (<CONTROL_PLANE_IP>:53)
     │
     ▼
@@ -53,19 +53,19 @@ MetalLB LoadBalancer IP (<GATEWAY_IP>)
     │
     ▼
 Cilium Gateway (homelab-gateway) — TLS terminated here
-    │  wildcard cert: *.homelab.local (cert-manager, auto-renews)
+    │  wildcard cert: *.<YOUR_DOMAIN> (cert-manager, auto-renews)
     │
-    ├── HTTPRoute → Argo CD        (https://argocd.homelab.local)
-    ├── HTTPRoute → Grafana        (https://grafana.homelab.local)
-    ├── HTTPRoute → Prometheus     (https://prometheus.homelab.local)
-    ├── HTTPRoute → Alertmanager   (https://alertmanager.homelab.local)
-    ├── HTTPRoute → Longhorn UI    (https://longhorn.homelab.local)
-    ├── HTTPRoute → Falcosidekick  (https://falco.homelab.local)
-    ├── HTTPRoute → Headlamp       (https://headlamp.homelab.local)
-    └── HTTPRoute → Hubble UI      (https://hubble.homelab.local)
+    ├── HTTPRoute → Argo CD        (https://argocd.<YOUR_DOMAIN>)
+    ├── HTTPRoute → Grafana        (https://grafana.<YOUR_DOMAIN>)
+    ├── HTTPRoute → Prometheus     (https://prometheus.<YOUR_DOMAIN>)
+    ├── HTTPRoute → Alertmanager   (https://alertmanager.<YOUR_DOMAIN>)
+    ├── HTTPRoute → Longhorn UI    (https://longhorn.<YOUR_DOMAIN>)
+    ├── HTTPRoute → Falcosidekick  (https://falco.<YOUR_DOMAIN>)
+    ├── HTTPRoute → Headlamp       (https://headlamp.<YOUR_DOMAIN>)
+    └── HTTPRoute → Hubble UI      (https://hubble.<YOUR_DOMAIN>)
 
 Argo CD CLI (gRPC):
-    <ARGOCD_LB_IP> (direct LoadBalancer) → argocd-grpc.homelab.local
+    <ARGOCD_LB_IP> (direct LoadBalancer) → argocd-grpc.<YOUR_DOMAIN>
 ```
 
 ---
@@ -79,7 +79,7 @@ Argo CD CLI (gRPC):
 | Cilium | `kube-system` | 1.19.3 | CNI, kube-proxy replacement, Gateway API controller, Hubble observability |
 | MetalLB | `metallb-system` | latest | Assigns LAN IPs to `LoadBalancer` services (L2 mode) |
 | Gateway API CRDs | `kube-system` | v1.2.1 | Standard Gateway API resources consumed by Cilium |
-| CoreDNS LAN | `lan-dns` | v1.14.2 | Local DNS resolver — `*.homelab.local` wildcard, no `/etc/hosts` needed |
+| CoreDNS LAN | `lan-dns` | v1.14.2 | Local DNS resolver — `*.<YOUR_DOMAIN>` wildcard, no `/etc/hosts` needed |
 
 ### Storage
 
@@ -91,7 +91,7 @@ Argo CD CLI (gRPC):
 
 | Component | Namespace | Purpose |
 |---|---|---|
-| cert-manager | `cert-manager` | Self-signed CA + wildcard `*.homelab.local` cert — auto-renews, trusted on all nodes |
+| cert-manager | `cert-manager` | Self-signed CA + wildcard `*.<YOUR_DOMAIN>` cert — auto-renews, trusted on all nodes |
 
 ### GitOps
 
@@ -133,12 +133,12 @@ Argo CD CLI (gRPC):
 
 ### TLS Everywhere
 
-All services are served over HTTPS. TLS is terminated at the Cilium Gateway using a wildcard certificate (`*.homelab.local`) issued by cert-manager's self-signed CA.
+All services are served over HTTPS. TLS is terminated at the Cilium Gateway using a wildcard certificate (`*.<YOUR_DOMAIN>`) issued by cert-manager's self-signed CA.
 
 ```bash
 # Verify TLS
-curl -v https://grafana.homelab.local 2>&1 | grep -E "subject|issuer|verify"
-# subject: CN=*.homelab.local
+curl -v https://grafana.<YOUR_DOMAIN> 2>&1 | grep -E "subject|issuer|verify"
+# subject: CN=*.<YOUR_DOMAIN>
 # issuer: O=Homelab; CN=homelab-ca
 # SSL certificate verify ok.
 ```
@@ -280,8 +280,8 @@ All nodes (/etc/resolv.conf → nameserver <CONTROL_PLANE_IP>)
       ▼
 CoreDNS LAN pod (hostNetwork, port 53, on control plane)
       │
-      ├── *.homelab.local → <GATEWAY_IP> (wildcard template)
-      ├── argocd-grpc.homelab.local → <ARGOCD_LB_IP> (hosts plugin)
+      ├── *.<YOUR_DOMAIN> → <GATEWAY_IP> (wildcard template)
+      ├── argocd-grpc.<YOUR_DOMAIN> → <ARGOCD_LB_IP> (hosts plugin)
       └── everything else → forward to <ROUTER_IP> + 8.8.8.8
 ```
 
@@ -289,17 +289,17 @@ CoreDNS LAN pod (hostNetwork, port 53, on control plane)
 - `hostNetwork: true` — pod uses the host's network namespace
 - systemd-resolved stub listener disabled (`DNSStubListener=no`) to free port 53
 - `/etc/resolv.conf` locked with `chattr +i` to prevent NetworkManager overwriting
-- Wildcard template: any new `*.homelab.local` service resolves automatically — no DNS config changes needed
+- Wildcard template: any new `*.<YOUR_DOMAIN>` service resolves automatically — no DNS config changes needed
 
 **Adding a new service:**
-1. Create an HTTPRoute with `hostnames: ["my-new-app.homelab.local"]`
+1. Create an HTTPRoute with `hostnames: ["my-new-app.<YOUR_DOMAIN>"]`
 2. DNS resolves automatically — no DNS config changes needed
 
 **Updating DNS for a non-Gateway IP:**
 ```bash
 kubectl edit configmap coredns-lan -n lan-dns
 # Add to the hosts block:
-# <NEW_SERVICE_IP> my-special-service.homelab.local
+# <NEW_SERVICE_IP> my-special-service.<YOUR_DOMAIN>
 kubectl rollout restart deployment coredns-lan -n lan-dns
 ```
 
@@ -319,7 +319,7 @@ spec:
     namespace: kube-system
     sectionName: https
   hostnames:
-  - "my-app.homelab.local"
+  - "my-app.<YOUR_DOMAIN>"
   rules:
   - matches:
     - path:
@@ -481,15 +481,15 @@ All services resolve via the CoreDNS LAN pod. No `/etc/hosts` entries needed.
 
 | Service | URL | Purpose |
 |---|---|---|
-| Argo CD | `https://gitops.homelab.local` | GitOps UI |
-| Argo CD CLI | `gitops-grpc.homelab.local` | gRPC CLI access |
-| Grafana | `https://grafana.homelab.local` | Metrics + logs dashboards |
-| Prometheus | `https://prometheus.homelab.local` | Metrics query UI |
-| Alertmanager | `https://alertmanager.homelab.local` | Alert routing UI |
-| Longhorn | `https://longhorn-ebpf.homelab.local` | Storage management UI |
-| Falcosidekick UI | `https://falco-sec.homelab.local` | Security event dashboard |
-| Headlamp | `https://headlamp-cui.homelab.local` | Kubernetes cluster UI |
-| Hubble UI | `https://mycilium.homelab.local` | Network flow visualisation |
+| Argo CD | `https://gitops.<YOUR_DOMAIN>` | GitOps UI |
+| Argo CD CLI | `gitops-grpc.<YOUR_DOMAIN>` | gRPC CLI access |
+| Grafana | `https://grafana.<YOUR_DOMAIN>` | Metrics + logs dashboards |
+| Prometheus | `https://prometheus.<YOUR_DOMAIN>` | Metrics query UI |
+| Alertmanager | `https://alertmanager.<YOUR_DOMAIN>` | Alert routing UI |
+| Longhorn | `https://longhorn-ebpf.<YOUR_DOMAIN>` | Storage management UI |
+| Falcosidekick UI | `https://falco-sec.<YOUR_DOMAIN>` | Security event dashboard |
+| Headlamp | `https://headlamp-cui.<YOUR_DOMAIN>` | Kubernetes cluster UI |
+| Hubble UI | `https://mycilium.<YOUR_DOMAIN>` | Network flow visualisation |
 
 ### Argo CD
 
@@ -628,7 +628,7 @@ spec:
     namespace: kube-system
     sectionName: https
   hostnames:
-  - "my-app.homelab.local"
+  - "my-app.<YOUR_DOMAIN>"
   rules:
   - matches:
     - path:
@@ -696,6 +696,6 @@ kubectl create token headlamp --namespace headlamp --duration=8760h
 - **Loki multi-tenancy is enabled** — all Loki API calls require `X-Scope-OrgID: homelab`.
 - **Single Gateway for all services** — one MetalLB IP, all traffic routed via HTTPRoutes on `homelab-gateway`.
 - **Grafana Alloy replaces Promtail** — Promtail is deprecated. Alloy handles pod logs and Kubernetes events. Config uses a values file (not `--set`) to avoid Helm parser issues with River syntax.
-- **CoreDNS LAN pod replaces /etc/hosts** — wildcard `*.homelab.local` template means new services resolve automatically. systemd-resolved stub listener must be disabled on the control plane.
+- **CoreDNS LAN pod replaces /etc/hosts** — wildcard `*.<YOUR_DOMAIN>` template means new services resolve automatically. systemd-resolved stub listener must be disabled on the control plane.
 - **Kyverno enforces Pod Security Standards Restricted** — all new workloads must comply. Use a values file with security context settings when installing Helm charts.
 <!-- - **KEDA removed** — no event-driven workloads currently. Reinstall when needed: `helm install keda kedacore/keda --namespace keda --create-namespace --wait`. -->
